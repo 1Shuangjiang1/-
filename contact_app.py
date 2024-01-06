@@ -74,13 +74,13 @@ class ContactApp:
         sort_by_surname_button = ttk.Button(self.root, text="按姓氏排序", command=self.sort_contacts_by_surname)
         sort_by_surname_button.pack()
 
-        root = tk.Tk()
-        root.title("通讯录")
+        # root = tk.Tk()
+        # root.title("通讯录")
         
-        # 创建 Text 组件，设置字体
-        font = ("微软雅黑", 12)
-        info_text = tk.Text(root, height=10, width=30, font=font)
-        info_text.pack()
+        # # 创建 Text 组件，设置字体
+        # font = ("微软雅黑", 12)
+        # info_text = tk.Text(root, height=10, width=30, font=font)
+        # info_text.pack()
 
         table_button = ttk.Button(self.root, text="显示联系人表格", command=self.display_table)
         table_button.pack()
