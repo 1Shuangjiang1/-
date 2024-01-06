@@ -2,6 +2,9 @@ from ContactBook_class import *
 import tkinter as tk
 from tkinter import ttk
 from xpinyin import Pinyin
+from openpyxl import Workbook
+from openpyxl import load_workbook
+
 def write_user_to_file(user, filename):
     with open(filename, 'a') as file:
         file.write(f"{user.name},{user.phone_number},{user.__class__.__name__}\n")
@@ -74,13 +77,13 @@ class ContactApp:
         sort_by_surname_button = ttk.Button(self.root, text="按姓氏排序", command=self.sort_contacts_by_surname)
         sort_by_surname_button.pack()
 
-        root = tk.Tk()
-        root.title("通讯录")
-        
-        # 创建 Text 组件，设置字体
-        font = ("微软雅黑", 12)
-        info_text = tk.Text(root, height=10, width=30, font=font)
-        info_text.pack()
+        # root = tk.Tk()
+        # root.title("通讯录")
+        #
+        # # 创建 Text 组件，设置字体
+        # font = ("微软雅黑", 12)
+        # info_text = tk.Text(root, height=10, width=30, font=font)
+        # info_text.pack()
 
         table_button = ttk.Button(self.root, text="显示联系人表格", command=self.display_table)
         table_button.pack()
@@ -91,7 +94,7 @@ class ContactApp:
         import_button = ttk.Button(self.root, text="导入联系人", command=self.import_from_excel)
         import_button.pack()
 
-        创建信息框来显示联系人姓名
+        #创建信息框来显示联系人姓名
         self.info_text = tk.Text(self.root, height=10, width=30)
         self.info_text.pack()
 
@@ -384,7 +387,7 @@ class ContactApp:
     #     for contact in contacts:
     #         self.info_text.insert(tk.END, contact.name + " " + contact.phone_number + "\n")
 
-        def update_info_text(self):
+    def update_info_text(self):
         # 清空信息框并更新显示通讯录中的联系人信息
         self.info_text.delete(1.0, tk.END)
         for contact in self.contacts:
@@ -425,7 +428,7 @@ class ContactApp:
         self.update_info_text()  # 更新信息框以显示排序后的联系人
 
     
-        def display_table(self):
+    def display_table(self):
         # 创建一个新窗口来显示表格
         table_window = tk.Toplevel(self.root)
         table_window.title("联系人表格")
