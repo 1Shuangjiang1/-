@@ -377,15 +377,7 @@ class ContactApp:
         filter_button = ttk.Button(display_window, text="筛选", command=filter_contacts)
         filter_button.pack()
 
-    # def update_info_text(self, contacts=None):
-    #     # 清空信息框并更新显示通讯录中的联系人姓名
-    #     self.info_text.delete(1.0, tk.END)
 
-    #     if contacts is None:
-    #         contacts = self.contacts
-
-    #     for contact in contacts:
-    #         self.info_text.insert(tk.END, contact.name + " " + contact.phone_number + "\n")
 
     def update_info_text(self):
         # 清空信息框并更新显示通讯录中的联系人信息
@@ -424,7 +416,8 @@ class ContactApp:
     
     def sort_contacts_by_surname(self):
         # 对联系人按照姓名的拼音进行排序
-        self.contacts.sort(key=lambda x: get(x.name, format="strip", delimiter=""))
+        p = Pinyin()
+        self.contacts.sort(key=lambda x: p.get_pinyin(x.name, ''))
         self.update_info_text()  # 更新信息框以显示排序后的联系人
 
     
