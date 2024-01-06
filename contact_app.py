@@ -71,18 +71,27 @@ class ContactApp:
 
         display_button = ttk.Button(self.root, text="显示联系人", command=self.display_contacts)
         display_button.pack()
-        # sort_by_surname_button = ttk.Button(self.root, text="按姓氏排序", command=self.sort_contacts_by_surname)
-        # sort_by_surname_button.pack()
+        sort_by_surname_button = ttk.Button(self.root, text="按姓氏排序", command=self.sort_contacts_by_surname)
+        sort_by_surname_button.pack()
 
-        # root = tk.Tk()
-        # root.title("通讯录")
-        #
-        # # 创建 Text 组件，设置字体
-        # font = ("微软雅黑", 12)
-        # info_text = tk.Text(root, height=10, width=30, font=font)
-        # info_text.pack()
+        root = tk.Tk()
+        root.title("通讯录")
+        
+        # 创建 Text 组件，设置字体
+        font = ("微软雅黑", 12)
+        info_text = tk.Text(root, height=10, width=30, font=font)
+        info_text.pack()
 
-        # 创建信息框来显示联系人姓名
+        table_button = ttk.Button(self.root, text="显示联系人表格", command=self.display_table)
+        table_button.pack()
+
+        export_button = ttk.Button(self.root, text="导出到Excel", command=self.export_to_excel)
+        export_button.pack()
+
+        import_button = ttk.Button(self.root, text="导入联系人", command=self.import_from_excel)
+        import_button.pack()
+
+        创建信息框来显示联系人姓名
         self.info_text = tk.Text(self.root, height=10, width=30)
         self.info_text.pack()
 
@@ -365,24 +374,150 @@ class ContactApp:
         filter_button = ttk.Button(display_window, text="筛选", command=filter_contacts)
         filter_button.pack()
 
-    def update_info_text(self, contacts=None):
-        # 清空信息框并更新显示通讯录中的联系人姓名
+    # def update_info_text(self, contacts=None):
+    #     # 清空信息框并更新显示通讯录中的联系人姓名
+    #     self.info_text.delete(1.0, tk.END)
+
+    #     if contacts is None:
+    #         contacts = self.contacts
+
+    #     for contact in contacts:
+    #         self.info_text.insert(tk.END, contact.name + " " + contact.phone_number + "\n")
+
+        def update_info_text(self):
+        # 清空信息框并更新显示通讯录中的联系人信息
         self.info_text.delete(1.0, tk.END)
+        for contact in self.contacts:
+            contact_info = str(contact)
+            print(contact_info)
+            # 使用变量连接的方式来构建要显示的字符串
+            contact_info = (
+                f"Name: {contact.name}\n"
+                f"Birthday: {contact.birthday}\n"
+                f"Phone: {contact.phone_number}\n"
+                f"Email: {contact.email}\n"
+            )
 
-        if contacts is None:
-            contacts = self.contacts
+            # 根据联系人类型添加额外的信息
+            if isinstance(contact, Classmate):
+                contact_info += f"College: {contact.college}\nMajor: {contact.major}\n"
+            elif isinstance(contact, Teacher):
+                contact_info += f"College: {contact.college}\nTitle: {contact.title}\nResearch Direction: {contact.ResearchDirection}\n"
+            elif isinstance(contact, Colleague):
+                contact_info += f"Company: {contact.company}\n"
+            elif isinstance(contact, Friend):
+                contact_info += f"How Met: {contact.how_met}\n"
+            elif isinstance(contact, Relative):
+                contact_info += f"Relationship: {contact.relationship}\n"
 
-        for contact in contacts:
-            self.info_text.insert(tk.END, contact.name + " " + contact.phone_number + "\n")
+            contact_info += "\n"  # 在每个联系人信息的最后添加一个额外的换行符来分隔
+
+            self.info_text.insert(tk.END, contact_info)  # 将信息插入到文本框
 
     def sort_contacts_by_birthday(self):
         # 对联系人按生日排序，假设生日格式为YYYY-MM-DD
         self.contacts.sort(key=lambda x: x.birthday)
         self.update_info_text()  # 更新信息框以显示排序后的联系人
-    #
-    # def sort_contacts_by_surname(self):
-    #     # 对联系人按照姓名的拼音进行排序
-    #     self.contacts.sort(key=lambda x: get(x.name, format="strip", delimiter=""))
-    #     self.update_info_text()  # 更新信息框以显示排序后的联系人
+    
+    def sort_contacts_by_surname(self):
+        # 对联系人按照姓名的拼音进行排序
+        self.contacts.sort(key=lambda x: get(x.name, format="strip", delimiter=""))
+        self.update_info_text()  # 更新信息框以显示排序后的联系人
+
+    
+        def display_table(self):
+        # 创建一个新窗口来显示表格
+        table_window = tk.Toplevel(self.root)
+        table_window.title("联系人表格")
+
+        # 创建一个Treeview控件
+        columns = ("name", "birthday", "phone", "email", "extra")
+        table = ttk.Treeview(table_window, columns=columns, show='headings')
+
+        # 定义列标题
+        table.heading("name", text="姓名")
+        table.heading("birthday", text="生日")
+        table.heading("phone", text="电话")
+        table.heading("email", text="电子邮件")
+        table.heading("extra", text="额外信息")
+
+        # 添加联系人到表格中
+        for contact in self.contacts:
+            extra_info = ''
+            if isinstance(contact, Classmate):
+                extra_info = f"学院: {contact.college}, 专业: {contact.major}"
+            elif isinstance(contact, Teacher):
+                extra_info = f"学院: {contact.college}, 职称: {contact.title}, 研究方向: {contact.ResearchDirection}"
+            elif isinstance(contact, Colleague):
+                extra_info = f"公司: {contact.company}"
+            elif isinstance(contact, Friend):
+                extra_info = f"如何认识: {contact.how_met}"
+            elif isinstance(contact, Relative):
+                extra_info = f"亲戚关系: {contact.relationship}"
+
+            # 将联系人信息插入表格
+            table.insert("", tk.END, values=(contact.name, contact.birthday, contact.phone_number, contact.email, extra_info))
+
+        # 放置表格
+        table.pack(expand=True, fill='both')
+
+        # 启动窗口循环
+        table_window.mainloop()
+
+    def export_to_excel(self):
+        # 创建一个Excel工作簿
+        workbook = Workbook()
+        sheet = workbook.active
+
+        # 添加表头
+        headers = ["姓名", "生日", "电话", "电子邮件", "额外信息"]
+        sheet.append(headers)
+
+        # 遍历联系人，添加到表格中
+        for contact in self.contacts:
+            extra_info = ''
+            if isinstance(contact, Classmate):
+                extra_info = f"学院: {contact.college}, 专业: {contact.major}"
+            elif isinstance(contact, Teacher):
+                extra_info = f"学院: {contact.college}, 职称: {contact.title}, 研究方向: {contact.ResearchDirection}"
+            elif isinstance(contact, Colleague):
+                extra_info = f"公司: {contact.company}"
+            elif isinstance(contact, Friend):
+                extra_info = f"如何认识: {contact.how_met}"
+            elif isinstance(contact, Relative):
+                extra_info = f"亲戚关系: {contact.relationship}"
+
+            # 将每个联系人的信息作为一行添加到表格中
+            sheet.append([contact.name, contact.birthday, contact.phone_number, contact.email, extra_info])
+
+        # 保存工作簿到文件
+        workbook.save(filename="Contacts.xlsx")
+
+    def import_from_excel(self):
+        # 定义Excel文件的路径
+        excel_path = "Contacts.xlsx"  # 请确保这个路径和文件名与你之前保存的Excel文件匹配
+
+        # 打开工作簿和选择工作表
+        workbook = load_workbook(excel_path)
+        sheet = workbook.active
+
+        # 清除当前所有联系人
+        self.contacts.clear()
+
+        # 从第二行开始遍历（假设第一行是标题行）
+        for row in sheet.iter_rows(min_row=2):
+            name = row[0].value
+            birthday = row[1].value
+            phone_number = row[2].value
+            email = row[3].value
+            extra_info = row[4].value  # 你需要根据extra_info的内容适当解析并创建相应的联系人对象
+
+            # 创建联系人对象并添加到列表
+            # 这里假设所有的联系人都是Classmate类型，你需要根据extra_info来创建正确类型的联系人
+            new_contact = Classmate(name, birthday, phone_number, email, "CollegeName", "MajorName")
+            self.contacts.append(new_contact)
+
+        # 更新显示或其他操作
+        self.update_info_text()
 
 
