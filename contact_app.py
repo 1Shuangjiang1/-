@@ -5,6 +5,12 @@ from xpinyin import Pinyin
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from tkinter import ttk, filedialog
+import matplotlib.pyplot as plt
+from collections import Counter
+from matplotlib.font_manager import FontProperties
+
+plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
+plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
 
 def write_user_to_file(user, filename):
     with open(filename, 'a') as file:
@@ -77,6 +83,9 @@ class ContactApp:
         display_button.pack()
         sort_by_surname_button = ttk.Button(self.root, text="按姓氏排序", command=self.sort_contacts_by_surname)
         sort_by_surname_button.pack()
+
+        stats_button = ttk.Button(self.root, text="显示统计图表", command=self.show_charts)
+        stats_button.pack()
 
         # root = tk.Tk()
         # root.title("通讯录")
@@ -619,3 +628,23 @@ class ContactApp:
             self.info_text.insert(tk.END,
                                   f"{contact.name}, {contact.birthday}, {contact.phone_number}, {contact.email}\n")
 
+    def show_charts(self):
+        # 统计各个类型的联系人数量
+        contact_types = [contact.__class__.__name__ for contact in self.contacts]
+        contact_counts = Counter(contact_types)
+
+        # 生成饼图
+        plt.figure(figsize=(8, 4))
+        plt.subplot(1, 2, 1)
+        plt.pie(contact_counts.values(), labels=contact_counts.keys(), autopct='%1.1f%%')
+        plt.title('联系人类型占比')
+
+        # 生成条形图
+        plt.subplot(1, 2, 2)
+        plt.bar(contact_counts.keys(), contact_counts.values())
+        plt.title('联系人类型数量')
+        plt.xticks(rotation=45)
+
+        # 显示图表
+        plt.tight_layout()
+        plt.show()
