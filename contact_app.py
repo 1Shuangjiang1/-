@@ -4,6 +4,7 @@ from tkinter import ttk
 from xpinyin import Pinyin
 from openpyxl import Workbook
 from openpyxl import load_workbook
+from tkinter import ttk, filedialog
 
 def write_user_to_file(user, filename):
     with open(filename, 'a') as file:
@@ -469,32 +470,54 @@ class ContactApp:
         sheet = workbook.active
 
         # 添加表头
-        headers = ["姓名", "生日", "电话", "电子邮件", "额外信息"]
+        headers = ["类别", "姓名", "生日", "电话", "电子邮件", "额外信息"]
         sheet.append(headers)
+
+        # seen = set()
+        # unique_contacts = [c for c in self.contacts if (c.name, c.phone_number, c.email) not in seen and not seen.add(
+        #     (c.name, c.phone_number, c.email))]
+
+        # 类别映射到中文
+        class_to_chinese = {
+            'Classmate': '同学',
+            'Teacher': '老师',
+            'Colleague': '同事',
+            'Friend': '朋友',
+            'Relative': '亲戚',
+        }
 
         # 遍历联系人，添加到表格中
         for contact in self.contacts:
+            contact_type = class_to_chinese[contact.__class__.__name__]  # 将类名转换为中文类别名
             extra_info = ''
+            # 根据类别添加额外信息
             if isinstance(contact, Classmate):
-                extra_info = f"学院: {contact.college}, 专业: {contact.major}"
+                extra_info = f"{contact.college}; {contact.major}"
             elif isinstance(contact, Teacher):
-                extra_info = f"学院: {contact.college}, 职称: {contact.title}, 研究方向: {contact.ResearchDirection}"
+                extra_info = f"{contact.college}; {contact.title}; {contact.ResearchDirection}"
             elif isinstance(contact, Colleague):
-                extra_info = f"公司: {contact.company}"
+                extra_info = f"{contact.company}"
             elif isinstance(contact, Friend):
-                extra_info = f"如何认识: {contact.how_met}"
+                extra_info = f"{contact.how_met}"
             elif isinstance(contact, Relative):
-                extra_info = f"亲戚关系: {contact.relationship}"
+                extra_info = f"{contact.relationship}"
 
             # 将每个联系人的信息作为一行添加到表格中
-            sheet.append([contact.name, contact.birthday, contact.phone_number, contact.email, extra_info])
+            sheet.append(
+                [contact_type, contact.name, contact.birthday, contact.phone_number, contact.email, extra_info])
 
         # 保存工作簿到文件
         workbook.save(filename="Contacts.xlsx")
 
     def import_from_excel(self):
-        # 定义Excel文件的路径
-        excel_path = "Contacts.xlsx"  # 请确保这个路径和文件名与你之前保存的Excel文件匹配
+        # 弹出文件选择窗口
+        excel_path = filedialog.askopenfilename(
+            title="选择联系人Excel文件",
+            filetypes=(("Excel files", "*.xlsx *.xls"), ("All files", "*.*"))
+        )
+        # 如果用户取消了选择，则不执行任何操作
+        if not excel_path:
+            return
 
         # 打开工作簿和选择工作表
         workbook = load_workbook(excel_path)
@@ -505,19 +528,49 @@ class ContactApp:
 
         # 从第二行开始遍历（假设第一行是标题行）
         for row in sheet.iter_rows(min_row=2):
-            name = row[0].value
-            birthday = row[1].value
-            phone_number = row[2].value
-            email = row[3].value
-            extra_info = row[4].value  # 你需要根据extra_info的内容适当解析并创建相应的联系人对象
+            contact_type, name, birthday, phone_number, email, extra_info = [cell.value for cell in row]
 
-            # 创建联系人对象并添加到列表
-            # 这里假设所有的联系人都是Classmate类型，你需要根据extra_info来创建正确类型的联系人
-            new_contact = Classmate(name, birthday, phone_number, email, "CollegeName", "MajorName")
-            self.contacts.append(new_contact)
+            # 根据提取的额外信息创建联系人对象
+            if contact_type == '同学':
+                college, major = extra_info.split("; ")
+                new_contact = Classmate(name, birthday, phone_number, email, college, major)
+            elif contact_type == '老师':
+                college, title, research_direction = extra_info.split("; ")
+                new_contact = Teacher(name, birthday, phone_number, email, college, title, research_direction)
+            elif contact_type == '同事':
+                company = extra_info
+                new_contact = Colleague(name, birthday, phone_number, email, company)
+            elif contact_type == '亲戚':
+                relationship = extra_info  # 对于亲戚，额外信息中只有亲戚关系的描述
+                new_contact = Relative(name, birthday, phone_number, email, relationship)
+            elif contact_type == '朋友':
+                how_met = extra_info
+                new_contact = Friend(name, birthday, phone_number, email, how_met)
+            if new_contact:
+                self.contacts.append(new_contact)
 
-        # 更新显示或其他操作
+        # 更新界面显示或其他操作
         self.update_info_text()
+
+    def create_contact_from_excel(self, contact_type, name, birthday, phone_number, email, extra_info):
+        # 根据类别和额外信息解析和创建相应的联系人对象
+        if contact_type == 'Classmate':
+            college, major = extra_info.split("; ")
+            return Classmate(name, birthday, phone_number, email, college, major)
+        elif contact_type == 'Teacher':
+            college, title, research_direction = extra_info.split("; ")
+            return Teacher(name, birthday, phone_number, email, college, title, research_direction)
+        elif contact_type == 'Colleague':
+            company = extra_info
+            return Colleague(name, birthday, phone_number, email, company)
+        elif contact_type == 'Friend':
+            how_met = extra_info
+            return Friend(name, birthday, phone_number, email, how_met)
+        elif contact_type == 'Relative':
+            relationship = extra_info
+            return Relative(name, birthday, phone_number, email, relationship)
+        # ...其他类别...
+        return None
 
     def create_search_gui(self):
         # 创建一个新窗口来进行查询
