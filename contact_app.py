@@ -10,6 +10,7 @@ from collections import Counter
 from matplotlib.font_manager import FontProperties
 import os
 from tkinter import ttk, filedialog, messagebox
+import openpyxl
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
@@ -70,6 +71,7 @@ class ContactApp:
         self.user_file = "users.xlsx"
         self.blacklist_file = "blacklist.xlsx"
         self.username = None
+        self.auto_import_enabled = True
 
     # def start(self):
     #     self.login_window = tk.Toplevel(self.root)
@@ -116,6 +118,8 @@ class ContactApp:
         if self.check_password(username, password):
             messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
             self.username = username  # 保存用户名
+            if self.auto_import_enabled:
+                self.auto_import_contacts()  # 自动导入联系人
             return True  # 登录成功
 
         else:
@@ -244,6 +248,9 @@ class ContactApp:
 
         simple_search_button = ttk.Button(self.root, text="简化查询", command=self.create_search_gui)
         simple_search_button.pack()
+
+        self.auto_import_button = ttk.Checkbutton(self.root, text="启用自动导入联系人",command=self.toggle_auto_import)
+        self.auto_import_button.pack()
 
         #创建信息框来显示联系人姓名
         self.info_text = tk.Text(self.root, height=10, width=30)
@@ -660,22 +667,31 @@ class ContactApp:
         else:
             messagebox.showerror("保存失败", "未能识别用户名，保存失败！")
 
-    def import_from_excel(self):
-        # 弹出文件选择窗口
-        excel_path = filedialog.askopenfilename(
-            title="选择联系人Excel文件",
-            filetypes=(("Excel files", "*.xlsx *.xls"), ("All files", "*.*"))
-        )
-        # 如果用户取消了选择，则不执行任何操作
-        if not excel_path:
+    # def import_from_excel(self):
+    #     # 弹出文件选择窗口
+    #     excel_path = filedialog.askopenfilename(
+    #         title="选择联系人Excel文件",
+    #         filetypes=(("Excel files", "*.xlsx *.xls"), ("All files", "*.*"))
+    #     )
+    #     # 如果用户取消了选择，则不执行任何操作
+    #     if not excel_path:
+    #         return
+    def import_from_excel(self, file_path=None):
+        if file_path is None:
+            # 弹出文件选择窗口
+            file_path = filedialog.askopenfilename(
+                title="选择联系人Excel文件",
+                filetypes=[("Excel files", "*.xlsx *.xls"), ("All files", "*.*")])
+        # 如果用户取消了选择或文件不存在，则不执行任何操作
+        if not file_path or not os.path.exists(file_path):
             return
 
         # 打开工作簿和选择工作表
-        workbook = load_workbook(excel_path)
+        workbook = load_workbook(file_path)
         sheet = workbook.active
 
         # 清除当前所有联系人
-        self.contacts.clear()
+        # self.contacts.clear()
 
         # 从第二行开始遍历（假设第一行是标题行）
         for row in sheet.iter_rows(min_row=2):
@@ -796,4 +812,62 @@ class ContactApp:
             # 调用修改后的export_to_excel方法
             self.export_to_excel()
             self.root.destroy()
+
+    def toggle_auto_import(self):
+        self.auto_import_enabled = not self.auto_import_enabled
+        if self.auto_import_enabled:
+            messagebox.showinfo("自动导入", "自动导入功能已开启。")
+        else:
+            messagebox.showinfo("自动导入", "自动导入功能已关闭。")
+
+    def auto_import_contacts(self):
+        file_path = f"{self.username}_Contacts.xlsx"
+        if os.path.exists(file_path):
+            try:
+                # 打开工作簿和选择工作表
+                workbook = openpyxl.load_workbook(file_path)
+                sheet = workbook.active
+
+
+                # self.contacts.clear()
+                # 清除当前所有联系人
+
+                for row in sheet.iter_rows(min_row=2):
+                    contact_type, name, birthday, phone_number, email, extra_info = [cell.value for cell in row]
+
+                    # 根据提取的额外信息创建联系人对象
+                    new_contact = None
+                    if contact_type == '同学':
+                        college, major = extra_info.split("; ")
+                        new_contact = Classmate(name, birthday, phone_number, email, college, major)
+                    elif contact_type == '老师':
+                        college, title, research_direction = extra_info.split("; ")
+                        new_contact = Teacher(name, birthday, phone_number, email, college, title, research_direction)
+                    elif contact_type == '同事':
+                        company = extra_info
+                        new_contact = Colleague(name, birthday, phone_number, email, company)
+                    elif contact_type == '亲戚':
+                        relationship = extra_info  # 对于亲戚，额外信息中只有亲戚关系的描述
+                        new_contact = Relative(name, birthday, phone_number, email, relationship)
+                    elif contact_type == '朋友':
+                        how_met = extra_info
+                        new_contact = Friend(name, birthday, phone_number, email, how_met)
+
+                    if new_contact:
+                        self.contacts.append(new_contact)
+
+                self.update_info_text()  # 更新界面显示
+                messagebox.showinfo("自动导入", "联系人已成功自动导入。")
+            except Exception as e:
+                messagebox.showerror("自动导入", f"导入失败: {e}")
+
+    # def auto_import_contacts(self):
+    #     file_path = f"{self.username}_Contacts.xlsx"
+    #     if os.path.exists(file_path):
+    #         self.import_from_excel(file_path)  # 调用现有的导入方法
+    #     else:
+    #         messagebox.showinfo("自动导入", "没有找到之前的联系人文件，自动导入未执行。")
+
+
+
 
