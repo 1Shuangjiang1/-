@@ -11,6 +11,9 @@ from matplotlib.font_manager import FontProperties
 import os
 from tkinter import ttk, filedialog, messagebox
 import openpyxl
+import mail
+import random
+import string
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
@@ -72,41 +75,29 @@ class ContactApp:
         self.blacklist_file = "blacklist.xlsx"
         self.username = None
         self.auto_import_enabled = True
+        self.email = None  # 邮箱属性
 
-    # def start(self):
-    #     self.login_window = tk.Toplevel(self.root)
-    #     self.login_window.title("登录")
+
+
+    # def login(self, username, password):
+    #     if self.check_blacklist(username):
+    #         messagebox.showerror("登录失败", "该用户已被列入黑名单，无法登录！")
+    #         return False
+    #     if not self.check_user_exists(username):
+    #         messagebox.showerror("登录失败", "用户名不存在！")
+    #         return False
+    #     if self.check_password(username, password):
+    #         messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
+    #         self.username = username  # 保存用户名
+    #         if self.auto_import_enabled:
+    #             self.auto_import_contacts()  # 自动导入联系人
+    #         return True  # 登录成功
     #
-    #     # 用户名输入
-    #     username_label = ttk.Label(self.login_window, text="用户名:")
-    #     username_label.pack()
-    #     self.username_entry = ttk.Entry(self.login_window)
-    #     self.username_entry.pack()
-    #
-    #     # 密码输入
-    #     password_label = ttk.Label(self.login_window, text="密码:")
-    #     password_label.pack()
-    #     self.password_entry = ttk.Entry(self.login_window, show="*")
-    #     self.password_entry.pack()
-    #
-    #     # 登录按钮
-    #     login_button = ttk.Button(self.login_window, text="登录", command=self.login)
-    #     login_button.pack()
-    #
-    #     self.root.withdraw()  # 隐藏主窗口
-    #     self.login_window.mainloop()
-    #
-    # def login(self):
-    #     # 获取用户名和密码（这里应该连接到您的认证系统进行检查）
-    #     username = self.username_entry.get()
-    #     password = self.password_entry.get()
-    #
-    #     # 这里的代码只是为了示例，实际上您应该检查用户名和密码是否正确
-    #     if username == "admin" and password == "password":  # 假设正确的用户名是admin，密码是password
-    #         self.login_window.destroy()  # 关闭登录窗口
-    #         self.root.deiconify()  # 显示主窗口
     #     else:
-    #         tk.messagebox.showerror("登录失败", "用户名或密码错误")
+    #         messagebox.showerror("登录失败", "密码错误！")
+    #         self.add_to_blacklist(username)
+    #         messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
+    #         return False  # 登录失败
 
     def login(self, username, password):
         if self.check_blacklist(username):
@@ -118,10 +109,11 @@ class ContactApp:
         if self.check_password(username, password):
             messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
             self.username = username  # 保存用户名
+            # 邮箱已在 check_password 方法中设置
+            messagebox.showinfo("登录信息", f"用户名: {self.username}, 邮箱: {self.email}")
             if self.auto_import_enabled:
                 self.auto_import_contacts()  # 自动导入联系人
             return True  # 登录成功
-
         else:
             messagebox.showerror("登录失败", "密码错误！")
             self.add_to_blacklist(username)
@@ -147,15 +139,25 @@ class ContactApp:
     #         self.add_to_blacklist(username)
     #         messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
 
+    # def init_user_excel(self):
+    #     if not os.path.exists(self.user_file):
+    #         wb = Workbook()
+    #         ws = wb.active
+    #         ws.append(["Username", "Password"])
+    #         wb.save(self.user_file)
+    #     else:
+    #         wb = load_workbook(self.user_file)
+    #     return wb
     def init_user_excel(self):
         if not os.path.exists(self.user_file):
             wb = Workbook()
             ws = wb.active
-            ws.append(["Username", "Password"])
+            ws.append(["用户名", "密码", "邮箱"])  # 添加电子邮件列
             wb.save(self.user_file)
         else:
             wb = load_workbook(self.user_file)
         return wb
+
 
     def init_blacklist_excel(self):
         if not os.path.exists(self.blacklist_file):
@@ -175,10 +177,24 @@ class ContactApp:
                 return True
         return False
 
-    def register(self, username, password):
+    # def register(self, username, password):
+    #     wb = self.init_user_excel()
+    #     ws = wb.active
+    #     ws.append([username, password])
+    #     wb.save(self.user_file)
+    #
+    # def check_password(self, username, password):
+    #     wb = self.init_user_excel()
+    #     ws = wb.active
+    #     for row in ws.iter_rows(min_row=2):
+    #         if username == row[0].value and password == row[1].value:
+    #             return True
+    #     return False
+
+    def register(self, username, password, email):  # 添加电子邮件参数
         wb = self.init_user_excel()
         ws = wb.active
-        ws.append([username, password])
+        ws.append([username, password, email])
         wb.save(self.user_file)
 
     def check_password(self, username, password):
@@ -186,6 +202,8 @@ class ContactApp:
         ws = wb.active
         for row in ws.iter_rows(min_row=2):
             if username == row[0].value and password == row[1].value:
+                # 设置电子邮件属性
+                self.email = row[2].value
                 return True
         return False
 
@@ -867,6 +885,82 @@ class ContactApp:
     #         self.import_from_excel(file_path)  # 调用现有的导入方法
     #     else:
     #         messagebox.showinfo("自动导入", "没有找到之前的联系人文件，自动导入未执行。")
+
+    # def register_user(self, username, password, email):
+    #     if self.check_user_exists(username):
+    #         messagebox.showerror("注册失败", "该用户名已存在！")
+    #         return False
+    #     else:
+    #         self.add_user(username, password, email)
+    #         messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
+    #         return True
+
+    def generate_random_code(self,length=6):
+        """生成一个指定长度的随机验证码，包含数字和字母。"""
+        characters = string.ascii_letters + string.digits  # 包括字母和数字
+        return ''.join(random.choice(characters) for i in range(length))
+
+    def send_verification_code(self, email):
+        # 在这里实现发送验证码到邮箱的逻辑
+        # 为简化示例，这里返回一个假的验证码 "123456"
+        # print(f"发送验证码到 {email}")
+        # return "123456"
+        host_server = 'smtp.qq.com'
+        sender_qq = 'yangqifanbq@qq.com'
+        pwd = 'ligsaipzxolvhcec'  # 注意这通常是邮箱的授权码，并非登录密码
+        print(email)
+        receiver = email  # 直接使用方法参数
+        mail_title = '邮箱注册验证码'
+        # verification_code = '123456'  # 正常情况下这里应该是随机生成的验证码
+        verification_code = self.generate_random_code(6)
+        mail_content = f'<p>这是使用python登录QQ邮箱发送HTNL格式邮件的测试：您的邮箱验证码为：{verification_code}</p>'
+
+
+        try:
+            # 调用封装好的邮件发送函数
+            mail.send_verification_email(host_server, sender_qq, pwd, receiver, mail_title, mail_content)
+            return verification_code
+        except Exception as e:
+            print("邮件发送失败:", e)
+            return None
+
+    def validate_code(self, input_code, correct_code):
+        # 校验输入的验证码是否与正确的验证码匹配
+        return input_code == correct_code
+
+    def register_user(self, username, password, email):
+        if self.check_user_exists(username):
+            messagebox.showerror("注册失败", "该用户名已存在！")
+            return False
+        else:
+            # 获取用户输入的验证码
+            correct_code = self.send_verification_code(email)
+            verification_window = tk.Toplevel(self.root)
+            verification_window.title("请输入验证码")
+
+            verification_label = ttk.Label(verification_window, text="验证码:")
+            verification_label.pack()
+            verification_entry = ttk.Entry(verification_window)
+            verification_entry.pack()
+
+            def on_verification_confirm():
+                input_code = verification_entry.get()
+                if self.validate_code(input_code, correct_code):
+                    self.add_user(username, password, email)
+                    messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
+                    verification_window.destroy()
+                else:
+                    messagebox.showerror("注册失败", "验证码错误！")
+                    verification_entry.delete(0, tk.END)  # 清空输入框
+
+            confirm_button = ttk.Button(verification_window, text="验证", command=on_verification_confirm)
+            confirm_button.pack()
+
+    def add_user(self, username, password, email):
+        wb = self.init_user_excel()
+        ws = wb.active
+        ws.append([username, password, email])  # 假设 Excel 文件有三列：用户名、密码和邮箱
+        wb.save(self.user_file)
 
 
 
