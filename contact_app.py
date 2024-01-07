@@ -8,9 +8,13 @@ from tkinter import ttk, filedialog
 import matplotlib.pyplot as plt
 from collections import Counter
 from matplotlib.font_manager import FontProperties
+import os
+from tkinter import ttk, filedialog, messagebox
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
+
+
 
 def write_user_to_file(user, filename):
     with open(filename, 'a') as file:
@@ -63,6 +67,137 @@ class ContactApp:
         self.root.title("通讯录")
         self.contacts = []
         self.create_gui()
+        self.user_file = "users.xlsx"
+        self.blacklist_file = "blacklist.xlsx"
+        self.username = None
+
+    # def start(self):
+    #     self.login_window = tk.Toplevel(self.root)
+    #     self.login_window.title("登录")
+    #
+    #     # 用户名输入
+    #     username_label = ttk.Label(self.login_window, text="用户名:")
+    #     username_label.pack()
+    #     self.username_entry = ttk.Entry(self.login_window)
+    #     self.username_entry.pack()
+    #
+    #     # 密码输入
+    #     password_label = ttk.Label(self.login_window, text="密码:")
+    #     password_label.pack()
+    #     self.password_entry = ttk.Entry(self.login_window, show="*")
+    #     self.password_entry.pack()
+    #
+    #     # 登录按钮
+    #     login_button = ttk.Button(self.login_window, text="登录", command=self.login)
+    #     login_button.pack()
+    #
+    #     self.root.withdraw()  # 隐藏主窗口
+    #     self.login_window.mainloop()
+    #
+    # def login(self):
+    #     # 获取用户名和密码（这里应该连接到您的认证系统进行检查）
+    #     username = self.username_entry.get()
+    #     password = self.password_entry.get()
+    #
+    #     # 这里的代码只是为了示例，实际上您应该检查用户名和密码是否正确
+    #     if username == "admin" and password == "password":  # 假设正确的用户名是admin，密码是password
+    #         self.login_window.destroy()  # 关闭登录窗口
+    #         self.root.deiconify()  # 显示主窗口
+    #     else:
+    #         tk.messagebox.showerror("登录失败", "用户名或密码错误")
+
+    def login(self, username, password):
+        if self.check_blacklist(username):
+            messagebox.showerror("登录失败", "该用户已被列入黑名单，无法登录！")
+            return False
+        if not self.check_user_exists(username):
+            messagebox.showerror("登录失败", "用户名不存在！")
+            return False
+        if self.check_password(username, password):
+            messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
+            self.username = username  # 保存用户名
+            return True  # 登录成功
+
+        else:
+            messagebox.showerror("登录失败", "密码错误！")
+            self.add_to_blacklist(username)
+            messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
+            return False  # 登录失败
+
+    # def login(self):
+    #     # 获取用户名和密码（这里应该连接到您的认证系统进行检查）
+    #     username = self.username_entry.get()
+    #     password = self.password_entry.get()
+    #
+    #     # 这里的代码只是为了示例，实际上您应该检查用户名和密码是否正确
+    #     if self.check_blacklist(username):
+    #         messagebox.showerror("登录失败", "该用户已被列入黑名单，无法登录！")
+    #     elif not self.check_user_exists(username):
+    #         messagebox.showerror("登录失败", "用户名不存在！")
+    #     elif self.check_password(username, password):
+    #         messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
+    #         self.login_window.destroy()  # 关闭登录窗口
+    #         self.root.deiconify()  # 显示主窗口
+    #     else:
+    #         messagebox.showerror("登录失败", "密码错误！")
+    #         self.add_to_blacklist(username)
+    #         messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
+
+    def init_user_excel(self):
+        if not os.path.exists(self.user_file):
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["Username", "Password"])
+            wb.save(self.user_file)
+        else:
+            wb = load_workbook(self.user_file)
+        return wb
+
+    def init_blacklist_excel(self):
+        if not os.path.exists(self.blacklist_file):
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["Username"])
+            wb.save(self.blacklist_file)
+        else:
+            wb = load_workbook(self.blacklist_file)
+        return wb
+
+    def check_user_exists(self, username):
+        wb = self.init_user_excel()
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            if username == row[0].value:
+                return True
+        return False
+
+    def register(self, username, password):
+        wb = self.init_user_excel()
+        ws = wb.active
+        ws.append([username, password])
+        wb.save(self.user_file)
+
+    def check_password(self, username, password):
+        wb = self.init_user_excel()
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            if username == row[0].value and password == row[1].value:
+                return True
+        return False
+
+    def add_to_blacklist(self, username):
+        wb = self.init_blacklist_excel()
+        ws = wb.active
+        ws.append([username])
+        wb.save(self.blacklist_file)
+
+    def check_blacklist(self, username):
+        wb = self.init_blacklist_excel()
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            if username == row[0].value:
+                return True
+        return False
 
     def create_gui(self):
         # 创建增加联系人按钮
@@ -86,6 +221,9 @@ class ContactApp:
 
         stats_button = ttk.Button(self.root, text="显示统计图表", command=self.show_charts)
         stats_button.pack()
+
+        exit_button = ttk.Button(self.root, text="退出并保存", command=self.exit_app)
+        exit_button.pack()
 
         # root = tk.Tk()
         # root.title("通讯录")
@@ -516,7 +654,11 @@ class ContactApp:
                 [contact_type, contact.name, contact.birthday, contact.phone_number, contact.email, extra_info])
 
         # 保存工作簿到文件
-        workbook.save(filename="Contacts.xlsx")
+        # workbook.save(filename="Contacts.xlsx")
+        if self.username:  # 确保用户名已设置
+            workbook.save(filename=f"{self.username}_Contacts.xlsx")
+        else:
+            messagebox.showerror("保存失败", "未能识别用户名，保存失败！")
 
     def import_from_excel(self):
         # 弹出文件选择窗口
@@ -648,3 +790,10 @@ class ContactApp:
         # 显示图表
         plt.tight_layout()
         plt.show()
+
+    def exit_app(self):
+        if messagebox.askokcancel("退出", "您确定要退出并保存联系人吗？"):
+            # 调用修改后的export_to_excel方法
+            self.export_to_excel()
+            self.root.destroy()
+
