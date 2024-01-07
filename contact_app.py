@@ -76,6 +76,7 @@ class ContactApp:
         self.username = None
         self.auto_import_enabled = True
         self.email = None  # 邮箱属性
+        self.latest_forget_verification_code = None  # 用于保存最新的验证码
 
 
 
@@ -596,7 +597,8 @@ class ContactApp:
         self.contacts.sort(key=lambda x: p.get_pinyin(x.name, ''))
         self.update_info_text()  # 更新信息框以显示排序后的联系人
 
-    
+# _______________________________________________________________________
+# 展示联系人信息表格（功能有点重复）
     def display_table(self):
         # 创建一个新窗口来显示表格
         table_window = tk.Toplevel(self.root)
@@ -636,6 +638,8 @@ class ContactApp:
         # 启动窗口循环
         table_window.mainloop()
 
+# _______________________________________________________________________
+# 导出为excel
     def export_to_excel(self):
         # 创建一个Excel工作簿
         workbook = Workbook()
@@ -685,7 +689,10 @@ class ContactApp:
         else:
             messagebox.showerror("保存失败", "未能识别用户名，保存失败！")
 
-    # def import_from_excel(self):
+# _______________________________________________________________________
+# 外部导入excel，读取excel中的联系人
+
+   # def import_from_excel(self):
     #     # 弹出文件选择窗口
     #     excel_path = filedialog.askopenfilename(
     #         title="选择联系人Excel文件",
@@ -757,6 +764,8 @@ class ContactApp:
         # ...其他类别...
         return None
 
+# _______________________________________________________________________
+# 简单查询
     def create_search_gui(self):
         # 创建一个新窗口来进行查询
         search_window = tk.Toplevel(self.root)
@@ -804,6 +813,9 @@ class ContactApp:
             self.info_text.insert(tk.END,
                                   f"{contact.name}, {contact.birthday}, {contact.phone_number}, {contact.email}\n")
 
+# _______________________________________________________________________
+# 画统计图
+
     def show_charts(self):
         # 统计各个类型的联系人数量
         contact_types = [contact.__class__.__name__ for contact in self.contacts]
@@ -825,6 +837,8 @@ class ContactApp:
         plt.tight_layout()
         plt.show()
 
+# _______________________________________________________________________
+# 退出自动保存
     def exit_app(self):
         if messagebox.askokcancel("退出", "您确定要退出并保存联系人吗？"):
             # 调用修改后的export_to_excel方法
@@ -895,6 +909,8 @@ class ContactApp:
     #         messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
     #         return True
 
+# _______________________________________________________________________
+    # 找回密码
     def generate_random_code(self,length=6):
         """生成一个指定长度的随机验证码，包含数字和字母。"""
         characters = string.ascii_letters + string.digits  # 包括字母和数字
@@ -932,35 +948,106 @@ class ContactApp:
         if self.check_user_exists(username):
             messagebox.showerror("注册失败", "该用户名已存在！")
             return False
-        else:
-            # 获取用户输入的验证码
-            correct_code = self.send_verification_code(email)
-            verification_window = tk.Toplevel(self.root)
-            verification_window.title("请输入验证码")
+        if self.check_email_exists(email):
+            messagebox.showerror("注册失败", "该邮箱已被注册！")
+            return False
+        # 获取用户输入的验证码
+        correct_code = self.send_verification_code(email)
+        verification_window = tk.Toplevel(self.root)
+        verification_window.title("请输入验证码")
 
-            verification_label = ttk.Label(verification_window, text="验证码:")
-            verification_label.pack()
-            verification_entry = ttk.Entry(verification_window)
-            verification_entry.pack()
+        verification_label = ttk.Label(verification_window, text="验证码:")
+        verification_label.pack()
+        verification_entry = ttk.Entry(verification_window)
+        verification_entry.pack()
 
-            def on_verification_confirm():
-                input_code = verification_entry.get()
-                if self.validate_code(input_code, correct_code):
-                    self.add_user(username, password, email)
-                    messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
-                    verification_window.destroy()
-                else:
-                    messagebox.showerror("注册失败", "验证码错误！")
-                    verification_entry.delete(0, tk.END)  # 清空输入框
+        def on_verification_confirm():
+            input_code = verification_entry.get()
+            if self.validate_code(input_code, correct_code):
+                self.add_user(username, password, email)
+                messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
+                verification_window.destroy()
+            else:
+                messagebox.showerror("注册失败", "验证码错误！")
+                verification_entry.delete(0, tk.END)  # 清空输入框
 
-            confirm_button = ttk.Button(verification_window, text="验证", command=on_verification_confirm)
-            confirm_button.pack()
+        confirm_button = ttk.Button(verification_window, text="验证", command=on_verification_confirm)
+        confirm_button.pack()
+
+    def check_email_exists(self, email):
+        """检查给定邮箱是否已经存在于用户信息中"""
+        wb = self.init_user_excel()
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            username_cell, password_cell, email_cell = row
+            if email == email_cell.value:
+                return True
+        return False
 
     def add_user(self, username, password, email):
         wb = self.init_user_excel()
         ws = wb.active
         ws.append([username, password, email])  # 假设 Excel 文件有三列：用户名、密码和邮箱
         wb.save(self.user_file)
+
+#_______________________________________________________________________
+    #找回密码
+    def send_reset_code(self, email):
+        # # 这里发送重置密码的验证码到用户的邮箱
+        # # 并返回生成的验证码，简化示例中返回一个固定验证码
+        # reset_code = "123456"
+        # # 实际应用中，这里将调用之前定义的邮件发送方法
+        # print("发送重置密码验证码到", email)
+        # return reset_code
+        # 在这里实现发送验证码到邮箱的逻辑
+        # 为简化示例，这里返回一个假的验证码 "123456"
+        # print(f"发送验证码到 {email}")
+        # return "123456"
+        host_server = 'smtp.qq.com'
+        sender_qq = 'yangqifanbq@qq.com'
+        pwd = 'ligsaipzxolvhcec'  # 注意这通常是邮箱的授权码，并非登录密码
+        print(email)
+        receiver = email  # 直接使用方法参数
+        mail_title = '邮箱注册验证码'
+        # verification_code = '123456'  # 正常情况下这里应该是随机生成的验证码
+        verification_code = self.generate_random_code(6)
+        self.latest_forget_verification_code=verification_code
+        mail_content = f'<p>这是使用python登录QQ邮箱发送HTNL格式邮件的测试：您的邮箱验证码为：{verification_code}</p>'
+
+
+        try:
+            # 调用封装好的邮件发送函数
+            mail.send_verification_email(host_server, sender_qq, pwd, receiver, mail_title, mail_content)
+            return verification_code
+        except Exception as e:
+            print("邮件发送失败:", e)
+            return None
+
+    def reset_password(self, email, new_password):
+        # 找到与提供的邮箱对应的用户名和原密码，并更新密码
+        wb = openpyxl.load_workbook(self.user_file)
+        ws = wb.active
+        user_found = False
+
+        # 遍历Excel的行
+        for row in ws.iter_rows(min_row=2):
+            username_cell, password_cell, email_cell = row
+            # 检查邮箱是否匹配
+            if email_cell.value == email:
+                # 更新密码
+                password_cell.value = new_password
+                user_found = True
+                break
+
+        if user_found:
+            # 保存工作簿
+            wb.save(self.user_file)
+            messagebox.showinfo("重置密码", "密码重置成功，请使用新密码登录。")
+        else:
+            messagebox.showerror("重置密码", "没有找到匹配的邮箱，请确保您输入的邮箱正确。")
+
+        # 关闭工作簿
+        wb.close()
 
 
 
