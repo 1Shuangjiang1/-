@@ -14,6 +14,7 @@ import openpyxl
 import mail
 import random
 import string
+import datetime
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
@@ -590,7 +591,7 @@ class ContactApp:
         # 对联系人按生日排序，假设生日格式为YYYY-MM-DD
         self.contacts.sort(key=lambda x: x.birthday)
         self.update_info_text()  # 更新信息框以显示排序后的联系人
-    
+
     def sort_contacts_by_surname(self):
         # 对联系人按照姓名的拼音进行排序
         p = Pinyin()
@@ -890,8 +891,10 @@ class ContactApp:
 
                 self.update_info_text()  # 更新界面显示
                 messagebox.showinfo("自动导入", "联系人已成功自动导入。")
+                self.check_and_send_birthday_wish()
             except Exception as e:
                 messagebox.showerror("自动导入", f"导入失败: {e}")
+
 
     # def auto_import_contacts(self):
     #     file_path = f"{self.username}_Contacts.xlsx"
@@ -1049,6 +1052,129 @@ class ContactApp:
         # 关闭工作簿
         wb.close()
 
+
+    # def check_and_send_birthday_wish(self):
+    #     today = datetime.date.today()
+    #     tomorrow = today + datetime.timedelta(days=1)
+    #
+    #     # 只比较月和日
+    #     if (self.birthday.month, self.birthday.day) in [(today.month, today.day), (tomorrow.month, tomorrow.day)]:
+    #         self.send_birthday_email()
+    #
+    # def send_birthday_email(self):
+    #     # 实现发送邮件的逻辑，这里仅为示例
+    #     print(f"Sending birthday email to {self.name} at {self.email}")
+    #     # 实际发送邮件的代码应该在这里
+    def check_and_send_birthday_wish(self):
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+
+        for contact in self.contacts:
+            # 检查联系人是否有今天或明天的生日
+            birthday = datetime.datetime.strptime(contact.birthday, "%Y-%m-%d").date()
+            if (birthday.month, birthday.day) in [(today.month, today.day), (tomorrow.month, tomorrow.day)]:
+                # 如果是，发送生日祝福邮件
+                self.edit_and_send_birthday_email(contact)
+
+
+    # def edit_and_send_birthday_email(self, contact):
+    #     # 创建一个新窗口
+    #     edit_window = tk.Toplevel(self.root)
+    #     edit_window.title("编辑生日邮件")
+    #
+    #     # 邮件标题输入
+    #     tk.Label(edit_window, text="邮件标题:").pack()
+    #     title_entry = tk.Entry(edit_window)
+    #     title_entry.insert(0, '生日快乐')  # 默认值
+    #     title_entry.pack()
+    #
+    #     # 邮件内容输入
+    #     tk.Label(edit_window, text="邮件内容:").pack()
+    #     content_entry = tk.Text(edit_window, height=10)
+    #     content_entry.insert('1.0', f'亲爱的{contact.name}，祝您生日快乐！')  # 默认值
+    #     content_entry.pack()
+    #
+    #     # 发送按钮
+    #     send_button = tk.Button(edit_window, text="发送邮件",
+    #                             command=lambda: self.send_birthday_email(contact,
+    #                                                                      title_entry.get(),
+    #                                                                      content_entry.get('1.0', 'end')))
+    #     send_button.pack()
+
+    def edit_and_send_birthday_email(self, contact):
+        # 创建一个新窗口
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("编辑生日邮件")
+
+        # 确定生日是今天还是明天
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        birthday = datetime.datetime.strptime(contact.birthday, "%Y-%m-%d").date()
+        birthday_str = "今天" if (birthday.month, birthday.day) == (today.month, today.day) else "明天"
+
+        # 显示是今天还是明天生日
+        tk.Label(edit_window, text=f"{contact.name} 的生日是{birthday_str}!").pack()
+
+        # 查看详细信息按钮
+        details_button = tk.Button(edit_window, text="查看详细信息", command=lambda: self.show_contact_details(contact))
+        details_button.pack()
+
+        # 邮件标题输入
+        tk.Label(edit_window, text="邮件标题:").pack()
+        title_entry = tk.Entry(edit_window)
+        title_entry.insert(0, '生日快乐')  # 默认值
+        title_entry.pack()
+
+        # 邮件内容输入
+        tk.Label(edit_window, text="邮件内容:").pack()
+        content_entry = tk.Text(edit_window, height=10)
+        content_entry.insert('1.0', f'亲爱的{contact.name}，祝您生日快乐！')  # 默认值
+        content_entry.pack()
+
+        # 发送按钮
+        send_button = tk.Button(edit_window, text="发送邮件",
+                                command=lambda: self.send_birthday_email(contact,
+                                                                         title_entry.get(),
+                                                                         content_entry.get('1.0', 'end'),edit_window))
+        send_button.pack()
+
+    def show_contact_details(self, contact):
+        # 创建一个新窗口显示联系人详细信息
+        details_window = tk.Toplevel(self.root)
+        details_window.title(f"{contact.name} 的详细信息")
+
+        # 根据不同类型的联系人显示详细信息
+        tk.Label(details_window, text=f"姓名: {contact.name}").pack()
+        tk.Label(details_window, text=f"生日: {contact.birthday}").pack()
+        tk.Label(details_window, text=f"电话: {contact.phone_number}").pack()
+        tk.Label(details_window, text=f"电子邮件: {contact.email}").pack()
+
+        # 以下为不同类型联系人特有的信息
+        if isinstance(contact, Classmate):
+            tk.Label(details_window, text=f"大学: {contact.college}").pack()
+            tk.Label(details_window, text=f"专业: {contact.major}").pack()
+        elif isinstance(contact, Teacher):
+            tk.Label(details_window, text=f"大学: {contact.college}").pack()
+            tk.Label(details_window, text=f"职称: {contact.title}").pack()
+            tk.Label(details_window, text=f"研究方向: {contact.ResearchDirection}").pack()
+        elif isinstance(contact, Colleague):
+            tk.Label(details_window, text=f"公司: {contact.company}").pack()
+        elif isinstance(contact, Friend):
+            tk.Label(details_window, text=f"认识途径: {contact.how_met}").pack()
+        elif isinstance(contact, Relative):
+            tk.Label(details_window, text=f"关系: {contact.relationship}").pack()
+    def send_birthday_email(self, contact, mail_title, mail_content,edit_window):
+        # 发送生日祝福邮件的逻辑
+
+        host_server = 'smtp.qq.com'
+        sender_qq = 'yangqifanbq@qq.com'
+        pwd = 'ligsaipzxolvhcec'  # 注意这通常是邮箱的授权码，并非登录密码
+        receiver = contact.email
+
+
+        mail.send_verification_email(host_server, sender_qq, pwd, receiver, mail_title, mail_content)
+        print(f"发送生日祝福邮件给 {contact.name} 标题: {mail_title} 内容: {mail_content}")
+        edit_window.destroy()
 
 
 
