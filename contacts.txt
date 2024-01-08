@@ -1,0 +1,3 @@
+Со,1,Colleague
+іВ,2,Friend
+11,11,Classmate
