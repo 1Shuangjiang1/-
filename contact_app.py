@@ -16,6 +16,7 @@ import random
 import string
 import datetime
 import shutil
+import  user_personal_info
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
@@ -274,6 +275,9 @@ class ContactApp:
 
         edit_info_button = ttk.Button(self.root, text="编辑个人信息", command=self.edit_user_info)
         edit_info_button.pack()
+
+        info_button = ttk.Button(self.root, text="查看用户个人信息", command=self.show_user_info)
+        info_button.pack()
 
         #创建信息框来显示联系人姓名
         self.info_text = tk.Text(self.root, height=10, width=30)
@@ -696,15 +700,7 @@ class ContactApp:
 # _______________________________________________________________________
 # 外部导入excel，读取excel中的联系人
 
-   # def import_from_excel(self):
-    #     # 弹出文件选择窗口
-    #     excel_path = filedialog.askopenfilename(
-    #         title="选择联系人Excel文件",
-    #         filetypes=(("Excel files", "*.xlsx *.xls"), ("All files", "*.*"))
-    #     )
-    #     # 如果用户取消了选择，则不执行任何操作
-    #     if not excel_path:
-    #         return
+
     def import_from_excel(self, file_path=None):
         if file_path is None:
             # 弹出文件选择窗口
@@ -899,21 +895,6 @@ class ContactApp:
                 messagebox.showerror("自动导入", f"导入失败: {e}")
 
 
-    # def auto_import_contacts(self):
-    #     file_path = f"{self.username}_Contacts.xlsx"
-    #     if os.path.exists(file_path):
-    #         self.import_from_excel(file_path)  # 调用现有的导入方法
-    #     else:
-    #         messagebox.showinfo("自动导入", "没有找到之前的联系人文件，自动导入未执行。")
-
-    # def register_user(self, username, password, email):
-    #     if self.check_user_exists(username):
-    #         messagebox.showerror("注册失败", "该用户名已存在！")
-    #         return False
-    #     else:
-    #         self.add_user(username, password, email)
-    #         messagebox.showinfo("注册成功", f"欢迎，{username}! 请使用您的新账号登录。")
-    #         return True
 
 # _______________________________________________________________________
     # 找回密码
@@ -999,16 +980,7 @@ class ContactApp:
 #_______________________________________________________________________
     #找回密码
     def send_reset_code(self, email):
-        # # 这里发送重置密码的验证码到用户的邮箱
-        # # 并返回生成的验证码，简化示例中返回一个固定验证码
-        # reset_code = "123456"
-        # # 实际应用中，这里将调用之前定义的邮件发送方法
-        # print("发送重置密码验证码到", email)
-        # return reset_code
-        # 在这里实现发送验证码到邮箱的逻辑
-        # 为简化示例，这里返回一个假的验证码 "123456"
-        # print(f"发送验证码到 {email}")
-        # return "123456"
+
         host_server = 'smtp.qq.com'
         sender_qq = 'yangqifanbq@qq.com'
         pwd = 'ligsaipzxolvhcec'  # 注意这通常是邮箱的授权码，并非登录密码
@@ -1056,18 +1028,6 @@ class ContactApp:
         wb.close()
 
 
-    # def check_and_send_birthday_wish(self):
-    #     today = datetime.date.today()
-    #     tomorrow = today + datetime.timedelta(days=1)
-    #
-    #     # 只比较月和日
-    #     if (self.birthday.month, self.birthday.day) in [(today.month, today.day), (tomorrow.month, tomorrow.day)]:
-    #         self.send_birthday_email()
-    #
-    # def send_birthday_email(self):
-    #     # 实现发送邮件的逻辑，这里仅为示例
-    #     print(f"Sending birthday email to {self.name} at {self.email}")
-    #     # 实际发送邮件的代码应该在这里
     def check_and_send_birthday_wish(self):
         today = datetime.date.today()
         tomorrow = today + datetime.timedelta(days=1)
@@ -1080,29 +1040,6 @@ class ContactApp:
                 self.edit_and_send_birthday_email(contact)
 
 
-    # def edit_and_send_birthday_email(self, contact):
-    #     # 创建一个新窗口
-    #     edit_window = tk.Toplevel(self.root)
-    #     edit_window.title("编辑生日邮件")
-    #
-    #     # 邮件标题输入
-    #     tk.Label(edit_window, text="邮件标题:").pack()
-    #     title_entry = tk.Entry(edit_window)
-    #     title_entry.insert(0, '生日快乐')  # 默认值
-    #     title_entry.pack()
-    #
-    #     # 邮件内容输入
-    #     tk.Label(edit_window, text="邮件内容:").pack()
-    #     content_entry = tk.Text(edit_window, height=10)
-    #     content_entry.insert('1.0', f'亲爱的{contact.name}，祝您生日快乐！')  # 默认值
-    #     content_entry.pack()
-    #
-    #     # 发送按钮
-    #     send_button = tk.Button(edit_window, text="发送邮件",
-    #                             command=lambda: self.send_birthday_email(contact,
-    #                                                                      title_entry.get(),
-    #                                                                      content_entry.get('1.0', 'end')))
-    #     send_button.pack()
 
     def edit_and_send_birthday_email(self, contact):
         # 创建一个新窗口
@@ -1179,105 +1116,127 @@ class ContactApp:
         print(f"发送生日祝福邮件给 {contact.name} 标题: {mail_title} 内容: {mail_content}")
         edit_window.destroy()
 
+    # def edit_user_info(self):
+    #     edit_window = tk.Toplevel(self.root)
+    #     edit_window.title("编辑个人信息")
+    #
+    #     # 输入生日
+    #     tk.Label(edit_window, text="生日 (YYYY-MM-DD):").pack()
+    #     birthday_entry = tk.Entry(edit_window)
+    #     birthday_entry.insert(0, self.user_info.get('birthday', ''))
+    #     birthday_entry.pack()
+    #
+    #     # 输入联系电话
+    #     tk.Label(edit_window, text="联系电话:").pack()
+    #     phone_entry = tk.Entry(edit_window)
+    #     phone_entry.insert(0, self.user_info.get('phone', ''))
+    #     phone_entry.pack()
+    #
+    #     # 输入地址
+    #     tk.Label(edit_window, text="地址:").pack()
+    #     address_entry = tk.Entry(edit_window)
+    #     address_entry.insert(0, self.user_info.get('address', ''))
+    #     address_entry.pack()
+    #
+    #     # 选择头像
+    #     tk.Button(edit_window, text="选择头像", command=self.select_avatar).pack()
+    #
+    #     # 保存按钮
+    #     tk.Button(edit_window, text="保存",
+    #               command=lambda: self.save_user_info(
+    #                   birthday_entry.get(),
+    #                   phone_entry.get(),
+    #                   address_entry.get(),
+    #                   edit_window)).pack()
+    #
+    # def select_avatar(self):
+    #     file_path = filedialog.askopenfilename(title="选择头像图片", filetypes=[("图片文件", "*.jpg *.png")])
+    #     if file_path:
+    #         self.user_info['avatar'] = file_path
+    #
+    # def save_user_info(self, birthday, phone, address, window):
+    #     self.user_info['birthday'] = birthday
+    #     self.user_info['phone'] = phone
+    #     self.user_info['address'] = address
+    #     self.save_to_excel()
+    #     self.save_avatar()
+    #     messagebox.showinfo("保存成功", "个人信息已更新！")
+    #     window.destroy()
+    #
+    #
+    # def save_to_excel(self):
+    #     # 文件名
+    #     filename = "UserInfo.xlsx"
+    #     # 检查文件是否存在
+    #     if os.path.exists(filename):
+    #         workbook = load_workbook(filename)
+    #         sheet = workbook.active
+    #     else:
+    #         workbook = Workbook()
+    #         sheet = workbook.active
+    #         # 添加表头
+    #         sheet.append(["用户名", "生日", "联系电话", "地址"])
+    #
+    #     # 检查是否已存在该用户信息
+    #     user_row = None
+    #     for row in sheet.iter_rows(min_row=2):  # 从第二行开始查找
+    #         if row[0].value == self.username:  # 假设用户名存储在第一列
+    #             user_row = row
+    #             break
+    #
+    #     # 更新或添加用户信息
+    #     if user_row:  # 已存在该用户，更新信息
+    #         user_row[1].value = self.user_info.get('birthday', '')
+    #         user_row[2].value = self.user_info.get('phone', '')
+    #         user_row[3].value = self.user_info.get('address', '')
+    #     else:  # 不存在该用户，添加新行
+    #         sheet.append([self.username, self.user_info.get('birthday', ''), self.user_info.get('phone', ''),
+    #                       self.user_info.get('address', '')])
+    #
+    #     # 保存工作簿
+    #     workbook.save(filename)
+    #
+    # def save_avatar(self):
+    #     # 确保用户名和头像路径已经获取
+    #     if self.username and self.user_info.get('avatar'):
+    #         image_path = self.user_info['avatar']
+    #         # 获取文件扩展名
+    #         _, ext = os.path.splitext(image_path)
+    #         # 定义新的文件名
+    #         new_filename = f"{self.username}avatar{ext}"
+    #         # 获取当前工作目录
+    #         cwd = os.getcwd()
+    #         new_file_path = os.path.join(cwd, new_filename)
+    #
+    #         # 复制图片到当前目录下并重命名为用户名+avatar.ext
+    #         try:
+    #             shutil.copy(image_path, new_file_path)
+    #             print(f"头像已保存: {new_file_path}")
+    #         except Exception as e:
+    #             print(f"保存头像失败: {e}")
+
     def edit_user_info(self):
-        edit_window = tk.Toplevel(self.root)
-        edit_window.title("编辑个人信息")
-
-        # 输入生日
-        tk.Label(edit_window, text="生日 (YYYY-MM-DD):").pack()
-        birthday_entry = tk.Entry(edit_window)
-        birthday_entry.insert(0, self.user_info.get('birthday', ''))
-        birthday_entry.pack()
-
-        # 输入联系电话
-        tk.Label(edit_window, text="联系电话:").pack()
-        phone_entry = tk.Entry(edit_window)
-        phone_entry.insert(0, self.user_info.get('phone', ''))
-        phone_entry.pack()
-
-        # 输入地址
-        tk.Label(edit_window, text="地址:").pack()
-        address_entry = tk.Entry(edit_window)
-        address_entry.insert(0, self.user_info.get('address', ''))
-        address_entry.pack()
-
-        # 选择头像
-        tk.Button(edit_window, text="选择头像", command=self.select_avatar).pack()
-
-        # 保存按钮
-        tk.Button(edit_window, text="保存",
-                  command=lambda: self.save_user_info(
-                      birthday_entry.get(),
-                      phone_entry.get(),
-                      address_entry.get(),
-                      edit_window)).pack()
+        user_personal_info.edit_user_info(self)
 
     def select_avatar(self):
-        file_path = filedialog.askopenfilename(title="选择头像图片", filetypes=[("图片文件", "*.jpg *.png")])
-        if file_path:
-            self.user_info['avatar'] = file_path
+        user_personal_info.select_avatar(self)
 
     def save_user_info(self, birthday, phone, address, window):
-        self.user_info['birthday'] = birthday
-        self.user_info['phone'] = phone
-        self.user_info['address'] = address
-        self.save_to_excel()
-        self.save_avatar()
-        messagebox.showinfo("保存成功", "个人信息已更新！")
-        window.destroy()
-
-
+        user_personal_info.save_user_info(self, birthday, phone, address, window)
     def save_to_excel(self):
-        # 文件名
-        filename = "UserInfo.xlsx"
-        # 检查文件是否存在
-        if os.path.exists(filename):
-            workbook = load_workbook(filename)
-            sheet = workbook.active
-        else:
-            workbook = Workbook()
-            sheet = workbook.active
-            # 添加表头
-            sheet.append(["用户名", "生日", "联系电话", "地址"])
-
-        # 检查是否已存在该用户信息
-        user_row = None
-        for row in sheet.iter_rows(min_row=2):  # 从第二行开始查找
-            if row[0].value == self.username:  # 假设用户名存储在第一列
-                user_row = row
-                break
-
-        # 更新或添加用户信息
-        if user_row:  # 已存在该用户，更新信息
-            user_row[1].value = self.user_info.get('birthday', '')
-            user_row[2].value = self.user_info.get('phone', '')
-            user_row[3].value = self.user_info.get('address', '')
-        else:  # 不存在该用户，添加新行
-            sheet.append([self.username, self.user_info.get('birthday', ''), self.user_info.get('phone', ''),
-                          self.user_info.get('address', '')])
-
-        # 保存工作簿
-        workbook.save(filename)
+        user_personal_info.save_to_excel(self)
 
     def save_avatar(self):
-        # 确保用户名和头像路径已经获取
-        if self.username and self.user_info.get('avatar'):
-            image_path = self.user_info['avatar']
-            # 获取文件扩展名
-            _, ext = os.path.splitext(image_path)
-            # 定义新的文件名
-            new_filename = f"{self.username}avatar{ext}"
-            # 获取当前工作目录
-            cwd = os.getcwd()
-            new_file_path = os.path.join(cwd, new_filename)
+        user_personal_info.save_avatar(self)
 
-            # 复制图片到当前目录下并重命名为用户名+avatar.ext
-            try:
-                shutil.copy(image_path, new_file_path)
-                print(f"头像已保存: {new_file_path}")
-            except Exception as e:
-                print(f"保存头像失败: {e}")
+    def show_user_info(self):
+        user_personal_info.show_user_info(self)
 
+    def read_user_info(self):
+        user_personal_info.read_user_info(self)
+
+    def crop_to_circle(self, image):
+        return user_personal_info.crop_to_circle(self, image)
 
 
 
