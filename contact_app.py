@@ -17,6 +17,7 @@ import string
 import datetime
 import shutil
 import  user_personal_info
+import inherit_contacts
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # Windows系统使用SimHei字体
 plt.rcParams['axes.unicode_minus'] = False  # 正确显示负号
@@ -123,34 +124,6 @@ class ContactApp:
             messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
             return False  # 登录失败
 
-    # def login(self):
-    #     # 获取用户名和密码（这里应该连接到您的认证系统进行检查）
-    #     username = self.username_entry.get()
-    #     password = self.password_entry.get()
-    #
-    #     # 这里的代码只是为了示例，实际上您应该检查用户名和密码是否正确
-    #     if self.check_blacklist(username):
-    #         messagebox.showerror("登录失败", "该用户已被列入黑名单，无法登录！")
-    #     elif not self.check_user_exists(username):
-    #         messagebox.showerror("登录失败", "用户名不存在！")
-    #     elif self.check_password(username, password):
-    #         messagebox.showinfo("登录成功", f"欢迎回来，{username}!")
-    #         self.login_window.destroy()  # 关闭登录窗口
-    #         self.root.deiconify()  # 显示主窗口
-    #     else:
-    #         messagebox.showerror("登录失败", "密码错误！")
-    #         self.add_to_blacklist(username)
-    #         messagebox.showinfo("提示", "由于连续登录失败，该用户已被加入黑名单。")
-
-    # def init_user_excel(self):
-    #     if not os.path.exists(self.user_file):
-    #         wb = Workbook()
-    #         ws = wb.active
-    #         ws.append(["Username", "Password"])
-    #         wb.save(self.user_file)
-    #     else:
-    #         wb = load_workbook(self.user_file)
-    #     return wb
     def init_user_excel(self):
         if not os.path.exists(self.user_file):
             wb = Workbook()
@@ -180,19 +153,6 @@ class ContactApp:
                 return True
         return False
 
-    # def register(self, username, password):
-    #     wb = self.init_user_excel()
-    #     ws = wb.active
-    #     ws.append([username, password])
-    #     wb.save(self.user_file)
-    #
-    # def check_password(self, username, password):
-    #     wb = self.init_user_excel()
-    #     ws = wb.active
-    #     for row in ws.iter_rows(min_row=2):
-    #         if username == row[0].value and password == row[1].value:
-    #             return True
-    #     return False
 
     def register(self, username, password, email):  # 添加电子邮件参数
         wb = self.init_user_excel()
@@ -278,6 +238,10 @@ class ContactApp:
 
         info_button = ttk.Button(self.root, text="查看用户个人信息", command=self.show_user_info)
         info_button.pack()
+
+
+        inherit_button = ttk.Button(self.root, text="继承联系人", command=self.inherit_contacts)
+        inherit_button.pack()
 
         #创建信息框来显示联系人姓名
         self.info_text = tk.Text(self.root, height=10, width=30)
@@ -838,7 +802,7 @@ class ContactApp:
         plt.show()
 
 # _______________________________________________________________________
-# 退出自动保存
+# 退出自动保存和自动导入
     def exit_app(self):
         if messagebox.askokcancel("退出", "您确定要退出并保存联系人吗？"):
             # 调用修改后的export_to_excel方法
@@ -887,6 +851,7 @@ class ContactApp:
 
                     if new_contact:
                         self.contacts.append(new_contact)
+                        print(new_contact)
 
                 self.update_info_text()  # 更新界面显示
                 messagebox.showinfo("自动导入", "联系人已成功自动导入。")
@@ -1116,104 +1081,6 @@ class ContactApp:
         print(f"发送生日祝福邮件给 {contact.name} 标题: {mail_title} 内容: {mail_content}")
         edit_window.destroy()
 
-    # def edit_user_info(self):
-    #     edit_window = tk.Toplevel(self.root)
-    #     edit_window.title("编辑个人信息")
-    #
-    #     # 输入生日
-    #     tk.Label(edit_window, text="生日 (YYYY-MM-DD):").pack()
-    #     birthday_entry = tk.Entry(edit_window)
-    #     birthday_entry.insert(0, self.user_info.get('birthday', ''))
-    #     birthday_entry.pack()
-    #
-    #     # 输入联系电话
-    #     tk.Label(edit_window, text="联系电话:").pack()
-    #     phone_entry = tk.Entry(edit_window)
-    #     phone_entry.insert(0, self.user_info.get('phone', ''))
-    #     phone_entry.pack()
-    #
-    #     # 输入地址
-    #     tk.Label(edit_window, text="地址:").pack()
-    #     address_entry = tk.Entry(edit_window)
-    #     address_entry.insert(0, self.user_info.get('address', ''))
-    #     address_entry.pack()
-    #
-    #     # 选择头像
-    #     tk.Button(edit_window, text="选择头像", command=self.select_avatar).pack()
-    #
-    #     # 保存按钮
-    #     tk.Button(edit_window, text="保存",
-    #               command=lambda: self.save_user_info(
-    #                   birthday_entry.get(),
-    #                   phone_entry.get(),
-    #                   address_entry.get(),
-    #                   edit_window)).pack()
-    #
-    # def select_avatar(self):
-    #     file_path = filedialog.askopenfilename(title="选择头像图片", filetypes=[("图片文件", "*.jpg *.png")])
-    #     if file_path:
-    #         self.user_info['avatar'] = file_path
-    #
-    # def save_user_info(self, birthday, phone, address, window):
-    #     self.user_info['birthday'] = birthday
-    #     self.user_info['phone'] = phone
-    #     self.user_info['address'] = address
-    #     self.save_to_excel()
-    #     self.save_avatar()
-    #     messagebox.showinfo("保存成功", "个人信息已更新！")
-    #     window.destroy()
-    #
-    #
-    # def save_to_excel(self):
-    #     # 文件名
-    #     filename = "UserInfo.xlsx"
-    #     # 检查文件是否存在
-    #     if os.path.exists(filename):
-    #         workbook = load_workbook(filename)
-    #         sheet = workbook.active
-    #     else:
-    #         workbook = Workbook()
-    #         sheet = workbook.active
-    #         # 添加表头
-    #         sheet.append(["用户名", "生日", "联系电话", "地址"])
-    #
-    #     # 检查是否已存在该用户信息
-    #     user_row = None
-    #     for row in sheet.iter_rows(min_row=2):  # 从第二行开始查找
-    #         if row[0].value == self.username:  # 假设用户名存储在第一列
-    #             user_row = row
-    #             break
-    #
-    #     # 更新或添加用户信息
-    #     if user_row:  # 已存在该用户，更新信息
-    #         user_row[1].value = self.user_info.get('birthday', '')
-    #         user_row[2].value = self.user_info.get('phone', '')
-    #         user_row[3].value = self.user_info.get('address', '')
-    #     else:  # 不存在该用户，添加新行
-    #         sheet.append([self.username, self.user_info.get('birthday', ''), self.user_info.get('phone', ''),
-    #                       self.user_info.get('address', '')])
-    #
-    #     # 保存工作簿
-    #     workbook.save(filename)
-    #
-    # def save_avatar(self):
-    #     # 确保用户名和头像路径已经获取
-    #     if self.username and self.user_info.get('avatar'):
-    #         image_path = self.user_info['avatar']
-    #         # 获取文件扩展名
-    #         _, ext = os.path.splitext(image_path)
-    #         # 定义新的文件名
-    #         new_filename = f"{self.username}avatar{ext}"
-    #         # 获取当前工作目录
-    #         cwd = os.getcwd()
-    #         new_file_path = os.path.join(cwd, new_filename)
-    #
-    #         # 复制图片到当前目录下并重命名为用户名+avatar.ext
-    #         try:
-    #             shutil.copy(image_path, new_file_path)
-    #             print(f"头像已保存: {new_file_path}")
-    #         except Exception as e:
-    #             print(f"保存头像失败: {e}")
 
     def edit_user_info(self):
         user_personal_info.edit_user_info(self)
@@ -1238,6 +1105,72 @@ class ContactApp:
     def crop_to_circle(self, image):
         return user_personal_info.crop_to_circle(self, image)
 
+    def inherit_contacts(self):
+        inherit_contacts.inherit_contacts(self)
 
+    def add_inherited_contacts(self, other_username, other_password, window):
+        inherit_contacts.add_inherited_contacts(self, other_username, other_password, window)
 
+    def validate_other_user(self, other_username, other_password):
+        return True
+
+    from ContactBook_class import Classmate, Teacher, Colleague, Relative, Friend
+
+    def read_other_user_contacts(self, other_username):
+        # 读取另一个用户的联系人信息
+        filename = f"{other_username}_Contacts.xlsx"
+        if not os.path.exists(filename):
+            messagebox.showerror("错误", "联系人文件不存在。")
+            return []
+
+        workbook = load_workbook(filename)
+        sheet = workbook.active
+        other_contacts = []
+        for row in sheet.iter_rows(min_row=2):
+            contact_type, name, birthday, phone_number, email, extra_info = [cell.value for cell in row]
+
+            # 根据提取的额外信息创建联系人对象
+            new_contact = None
+            if contact_type == '同学':
+                college, major = extra_info.split("; ")
+                new_contact = Classmate(name, birthday, phone_number, email, college, major)
+            elif contact_type == '老师':
+                college, title, research_direction = extra_info.split("; ")
+                new_contact = Teacher(name, birthday, phone_number, email, college, title, research_direction)
+            elif contact_type == '同事':
+                company = extra_info
+                new_contact = Colleague(name, birthday, phone_number, email, company)
+            elif contact_type == '亲戚':
+                relationship = extra_info  # 对于亲戚，额外信息中只有亲戚关系的描述
+                new_contact = Relative(name, birthday, phone_number, email, relationship)
+            elif contact_type == '朋友':
+                how_met = extra_info
+                new_contact = Friend(name, birthday, phone_number, email, how_met)
+
+            if new_contact:
+                other_contacts.append(new_contact)
+
+        return other_contacts
+
+    def validate_other_user(self, other_username, other_password):
+        # 这里我们将读取用户文件来验证用户名和密码
+        wb = self.init_user_excel()  # 加载用户信息的工作簿
+        ws = wb.active  # 获取活动工作表
+
+        for row in ws.iter_rows(min_row=2):  # 从第二行开始遍历（跳过表头）
+            if row[0].value == other_username and row[1].value == other_password:
+                return True  # 找到匹配的用户名和密码，返回 True
+        return False  # 如果遍历完都没有找到匹配的用户名和密码，返回 False
+
+    def add_inherited_contacts(self, other_username, other_password, window):
+        # 验证另一个账号的用户名和密码
+        if self.validate_other_user(other_username, other_password):
+            other_contacts = self.read_other_user_contacts(other_username)
+            # 添加到当前用户的联系人列表
+            self.contacts.extend(other_contacts)
+            messagebox.showinfo("成功", "联系人已继承！")
+            window.destroy()
+            self.update_info_text()
+        else:
+            messagebox.showerror("错误", "用户名或密码错误。")
 
