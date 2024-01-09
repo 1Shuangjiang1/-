@@ -1,119 +1,27 @@
-# import tkinter as tk
-# from tkinter import ttk, messagebox
-# from contact_app import ContactApp
-#
-# def login(app, login_window, username_entry, password_entry):
-#     username = username_entry.get()
-#     password = password_entry.get()
-#     if app.login(username, password):  # 如果登录成功
-#         login_window.destroy()  # 关闭登录窗口
-#         root.deiconify()  # 显示主窗口
-#
-# def register(app):
-#     # 创建注册窗口
-#     register_window = tk.Toplevel()
-#     register_window.title("注册账号")
-#
-#     username_label = ttk.Label(register_window, text="用户名:")
-#     username_label.pack()
-#     username_entry = ttk.Entry(register_window)
-#     username_entry.pack()
-#
-#     password_label = ttk.Label(register_window, text="密码:")
-#     password_label.pack()
-#     password_entry = ttk.Entry(register_window, show="*")
-#     password_entry.pack()
-#
-#     email_label = ttk.Label(register_window, text="邮箱:")
-#     email_label.pack()
-#     email_entry = ttk.Entry(register_window)
-#     email_entry.pack()
-#
-#     # 注册按钮
-#     confirm_button = ttk.Button(register_window, text="注册",
-#                                 command=lambda: app.register_user(username_entry.get(), password_entry.get(),
-#                                                                   email_entry.get()))
-#     confirm_button.pack()
-#
-# def forgot_password(app):
-#     # 创建忘记密码窗口
-#     fp_window = tk.Toplevel()
-#     fp_window.title("找回密码")
-#
-#     email_label = ttk.Label(fp_window, text="注册邮箱:")
-#     email_label.pack()
-#     email_entry = ttk.Entry(fp_window)
-#     email_entry.pack()
-#
-#     code_label = ttk.Label(fp_window, text="验证码:")
-#     code_label.pack()
-#     code_entry = ttk.Entry(fp_window)
-#     code_entry.pack()
-#
-#     new_password_label = ttk.Label(fp_window, text="新密码:")
-#     new_password_label.pack()
-#     new_password_entry = ttk.Entry(fp_window, show="*")
-#     new_password_entry.pack()
-#
-#     # 发送验证码按钮
-#     send_code_button = ttk.Button(fp_window, text="发送验证码", command=lambda: send_code(app, email_entry.get()))
-#     send_code_button.pack()
-#
-#     # 确认按钮
-#     confirm_button = ttk.Button(fp_window, text="确认",
-#                                 command=lambda: confirm_reset(app, email_entry.get(), code_entry.get(),
-#                                                               new_password_entry.get(), fp_window))
-#     confirm_button.pack()
-#
-#     # 发送验证码按钮
-#     send_code_button = ttk.Button(fp_window, text="发送验证码", command=lambda: send_code(app, email_entry.get(), code_entry))
-#     send_code_button.pack()
-#
-#     # 确认按钮
-#     confirm_button = ttk.Button(fp_window, text="确认", command=lambda: confirm_reset(app, email_entry.get(), code_entry.get(), new_password_entry.get(), fp_window))
-#     confirm_button.pack()
-#
-# def send_code(app, email, code_entry):
-#     # 发送验证码
-#     reset_code = app.send_reset_code(email)
-#     print("验证码已发送到邮箱:", email, "验证码:", reset_code)
-#
-# def confirm_reset(app, email, input_code, new_password, window):
-#     # 校验验证码并重置密码
-#     correct_code = "123456"  # 假定的正确验证码
-#     if input_code == correct_code:
-#         app.reset_password(email, new_password)
-#         window.destroy()
-#     else:
-#         messagebox.showerror("错误", "验证码不正确，请重新输入。")
-#
-# if __name__ == "__main__":
-#     root = tk.Tk()
-#     root.withdraw()  # 先隐藏主窗口
-#     app = ContactApp(root)
-#
-#     # 创建登录窗口
-#     login_window = tk.Toplevel()
-#     login_window.title("登录")
-#
-#     # ...（省略登录窗口的其他部分）...
-#     login_window = tk.Toplevel()
-#     login_window.title("登录")
-#     username_label = ttk.Label(login_window, text="用户名:")
-#     username_label.pack()
-#     username_entry = ttk.Entry(login_window)
-#     username_entry.pack()
-#     password_label = ttk.Label(login_window, text="密码:")
-#     password_label.pack()
-#     password_entry = ttk.Entry(login_window, show="*")
-#     password_entry.pack()
-#     login_button = ttk.Button(login_window, text="登录", command=lambda: login(app, login_window, username_entry, password_entry))
-#     login_button.pack()
-#
-#     register_button = ttk.Button(login_window, text="注册账号", command=lambda: register(app))
-#     register_button.pack()
-#
-#     fp_button = ttk.Button(login_window, text="忘记密码？", command=lambda: forgot_password(app))
-#     fp_button.pack()
-#
-#     login_window.mainloop()  # 开始登录窗口的事件循环
+def send_verification_code_to_email(self, email):
+    # 生成验证码
+    self.current_verification_code = self.generate_random_code(6)
+    # 发送邮件
+    mail_title = '继承联系人验证码'
+    mail_content = f'您的验证码是：{self.current_verification_code}'
+    send_verification_email(self.host_server, self.sender_qq, self.pwd, email, mail_title, mail_content)
+    print(f"验证码 {self.current_verification_code} 已发送到邮箱 {email}")
+
+
+def generate_random_code(self, length=6):
+    """生成一个指定长度的随机验证码，包含数字和字母。"""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for i in range(length))
+
+
+def add_inherited_contacts_with_verification(self, other_username, other_password, email, input_code, window):
+    if self.validate_other_user(other_username, other_password):
+        if input_code == self.current_verification_code:
+            other_contacts = self.read_other_user_contacts(other_username)
+            # ...添加到当前用户的联系人列表...
+            messagebox.showinfo("成功", "联系人已继承！")
+            window.destroy()
+        else:
+            messagebox.showerror("错误", "验证码错误。")
+    else:
+        messagebox.showerror("错误", "用户名或密码错误。")

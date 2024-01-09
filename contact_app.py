@@ -82,6 +82,7 @@ class ContactApp:
         self.email = None  # 邮箱属性
         self.latest_forget_verification_code = None  # 用于保存最新的验证码
         self.user_info = {'birthday': '', 'phone': '', 'address': '', 'avatar': ''}  # 存储用户信息
+        self.inherit_verification_code = None
 
     # def login(self, username, password):
     #     if self.check_blacklist(username):
@@ -1105,11 +1106,11 @@ class ContactApp:
     def crop_to_circle(self, image):
         return user_personal_info.crop_to_circle(self, image)
 
-    def inherit_contacts(self):
-        inherit_contacts.inherit_contacts(self)
-
-    def add_inherited_contacts(self, other_username, other_password, window):
-        inherit_contacts.add_inherited_contacts(self, other_username, other_password, window)
+    # def inherit_contacts(self):
+    #     inherit_contacts.inherit_contacts(self)
+    #
+    # def add_inherited_contacts(self, other_username, other_password, window):
+    #     inherit_contacts.add_inherited_contacts(self, other_username, other_password, window)
 
     def validate_other_user(self, other_username, other_password):
         return True
@@ -1171,6 +1172,125 @@ class ContactApp:
             messagebox.showinfo("成功", "联系人已继承！")
             window.destroy()
             self.update_info_text()
+        else:
+            messagebox.showerror("错误", "用户名或密码错误。")
+
+    #___________________________________________
+    def send_verification_code_to_email(self, email):
+        # 生成验证码
+        # self.current_verification_code = self.generate_random_code(6)
+        # # 发送邮件
+        # mail_title = '继承联系人验证码'
+        # mail_content = f'您的验证码是：{self.current_verification_code}'
+        # mail.send_verification_email(self.host_server, self.sender_qq, self.pwd, email, mail_title, mail_content)
+        # print(f"验证码 {self.current_verification_code} 已发送到邮箱 {email}")
+        host_server = 'smtp.qq.com'
+        sender_qq = 'yangqifanbq@qq.com'
+        pwd = 'ligsaipzxolvhcec'  # 注意这通常是邮箱的授权码，并非登录密码
+        print(email)
+        receiver = email  # 直接使用方法参数
+        mail_title = '邮箱注册验证码'
+        # verification_code = '123456'  # 正常情况下这里应该是随机生成的验证码
+        verification_code = self.generate_random_code(6)
+        self.latest_forget_verification_code = verification_code
+        mail_content = f'<p>这是使用python登录QQ邮箱发送HTNL格式邮件的测试：您的邮箱验证码为：{verification_code}</p>'
+
+        try:
+            # 调用封装好的邮件发送函数
+            mail.send_verification_email(host_server, sender_qq, pwd, receiver, mail_title, mail_content)
+            self.inherit_verification_code = verification_code
+            return verification_code
+        except Exception as e:
+            print("邮件发送失败:", e)
+            return None
+
+    def add_inherited_contacts(self, other_username, other_password, window):
+        # 验证另一个账号的用户名和密码
+        if self.validate_other_user(other_username, other_password):
+            email = self.get_user_email(other_username)
+            if email:
+                # 如果账户验证成功，则弹出邮箱验证窗口
+                self.verification_window(email, window)
+            else:
+                messagebox.showerror("错误", "找不到对应的邮箱。")
+        else:
+            messagebox.showerror("错误", "用户名或密码错误。")
+
+    def get_user_email(self, other_username):
+        # 从users.xlsx中读取对应账号的邮箱
+        wb = load_workbook('users.xlsx')
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2):
+            if row[0].value == other_username:
+                return row[2].value  # 假设邮箱在第三列
+        return None
+
+    def verification_window(self, email, inherit_window,other_username):
+        # 创建一个新窗口用于邮箱验证
+        email_verification_window = tk.Toplevel(self.root)
+        email_verification_window.title("邮箱验证")
+
+        # 显示读取到的邮箱地址
+        tk.Label(email_verification_window, text=f"发送验证码到{other_username}的邮箱:").pack()
+
+        # 发送验证码按钮
+        send_code_button = ttk.Button(email_verification_window, text="发送验证码",
+                                      command=lambda: self.send_verification_code_to_email(email))
+        send_code_button.pack()
+
+        # 输入验证码
+        tk.Label(email_verification_window, text="输入验证码:").pack()
+        verification_code_entry = tk.Entry(email_verification_window)
+        verification_code_entry.pack()
+
+        # 确认按钮，用于验证验证码
+        confirm_verification_button = ttk.Button(email_verification_window, text="确认验证码",
+                                                 command=lambda: self.verify_code_and_inherit_contacts(
+                                                     verification_code_entry.get(),
+                                                     email_verification_window,
+                                                     inherit_window,other_username))
+        confirm_verification_button.pack()
+
+    def verify_code_and_inherit_contacts(self, input_code, verification_window, inherit_window,other_username):
+        # 验证输入的验证码是否与发送的验证码匹配
+        if input_code == self.inherit_verification_code:
+            # 如果验证码正确
+            messagebox.showinfo("成功", "验证码正确。")
+            other_contacts = self.read_other_user_contacts(other_username)
+            # 添加到当前用户的联系人列表
+            self.contacts.extend(other_contacts)
+            verification_window.destroy()
+            inherit_window.destroy()
+        else:
+            messagebox.showerror("错误", "验证码不正确。")
+    def inherit_contacts(self):
+        # 创建一个新窗口来输入其他账户的用户名和密码
+        inherit_window = tk.Toplevel(self.root)
+        inherit_window.title("继承联系人")
+
+        tk.Label(inherit_window, text="其他用户名:").pack()
+        other_username_entry = tk.Entry(inherit_window)
+        other_username_entry.pack()
+
+        tk.Label(inherit_window, text="其他密码:").pack()
+        other_password_entry = tk.Entry(inherit_window, show="*")
+        other_password_entry.pack()
+
+        confirm_button = ttk.Button(inherit_window, text="确认",
+                                    command=lambda: self.validate_and_proceed(
+                                        other_username_entry.get(),
+                                        other_password_entry.get(),
+                                        inherit_window))
+        confirm_button.pack()
+
+    def validate_and_proceed(self, other_username, other_password, inherit_window):
+        # 验证另一个账号的用户名和密码
+        if self.validate_other_user(other_username, other_password):
+            email = self.get_user_email(other_username)
+            if email:
+                self.verification_window(email, inherit_window,other_username)
+            else:
+                messagebox.showerror("错误", "找不到对应的邮箱。")
         else:
             messagebox.showerror("错误", "用户名或密码错误。")
 
